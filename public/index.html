@@ -57,26 +57,32 @@
 					const successful = [];
 
 					vouchers.forEach(code => {
-						$.ajax({
-							url: 'http://localhost:3000/proxy',
+						fetch('http://localhost:3000/proxy', {
 							method: 'POST',
-							contentType: 'application/json',
-							data: JSON.stringify({
+							mode: 'cors',
+							headers: {
+								'Content-Type': 'application/json'
+							},
+							body: JSON.stringify({
 								query: {
 									serial_number: [code],
 									browser_session: uuidv4(),
 									lang: 'id'
 								}
 							})
-						}).done(response => {
-							if (response.success) {
+						})
+						.then(response => response.json())
+						.then(data => {
+							if (data.success) {
 								successful.push(code);
 							} else {
-								failed.push(`${code} >> ${response.data.message}`);
+								failed.push(`${code} >> ${data.data.message}`);
 							}
-						}).fail(() => {
-							failed.push(code);
-						}).always(() => {
+						})
+						.catch(() => {
+							failed.push(`${code} >> Gagal cek kode`);
+						})
+						.finally(() => {
 							$('#failedCodes').val(failed.join('\n'));
 							$('#successfulCodes').val(successful.join('\n'));
 							$('#failedCount').text(failed.length);
